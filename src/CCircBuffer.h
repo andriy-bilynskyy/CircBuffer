@@ -5,12 +5,21 @@
 #include <new>
 #include <algorithm>
 
+/**
+ * FIFO buffer for storing Data_t elements.
+ */
 template <class Data_t>
 class CCircBuffer
 {
 public:
 
-    CCircBuffer(uint32_t size, bool overWriteEn) : m_dataSize(size), m_overWriteEn(overWriteEn)
+    /**
+     * Create buffer.
+     * @param size - size of buffer in elements
+     * @param overWriteEn - overwrite old data with new when overflow
+     */
+    CCircBuffer(uint32_t size, bool overWriteEn) : m_dataSize(size),
+                                                   m_overWriteEn(overWriteEn)
     {
         m_pData = new (std::nothrow) Data_t[size];
         m_dataHead = 0;
@@ -18,16 +27,27 @@ public:
         m_isEmpty = true;
     }
 
+    /**
+     * Destroy buffer.
+     */
     ~CCircBuffer()
     {
         delete [] m_pData;
     }
 
+    /**
+     * Get buffer size in elements.
+     * @return buffer size
+     */
     uint32_t size() const
     {
         return m_pData ? m_dataSize : 0;
     }
 
+    /**
+     * Get elements inside the buffer.
+     * @return - elements count
+     */
     uint32_t used() const
     {
         uint32_t used = 0;
@@ -51,11 +71,18 @@ public:
         return used;
     }
 
+    /**
+     * Get free buffer size in elements.
+     * @return free buffer size
+     */
     uint32_t free() const
     {
         return size() - used();
     }
 
+    /**
+     * Clear buffer
+     */
     void clear()
     {
         m_isEmpty = true;
@@ -63,6 +90,12 @@ public:
         m_dataTail = 0;
     }
 
+    /**
+     * Put data into buffer.
+     * @param data - pointer to data
+     * @param dataSize - data size
+     * @return
+     */
     uint32_t put(const Data_t data[], uint32_t dataSize)
     {
         uint32_t wrSize = 0;
@@ -111,6 +144,12 @@ public:
         return wrSize;
     }
 
+    /**
+     * Obtain data from buffer.
+     * @param data - buffer to obtained data
+     * @param bufSize - buffer size
+     * @return obtained elements
+     */
     uint32_t get(Data_t data[], uint32_t bufSize)
     {
         uint32_t rdSize = 0;
@@ -132,7 +171,8 @@ public:
                 {
                     btc = bufSize;
                 }
-                std::copy(&m_pData[m_dataTail], &m_pData[m_dataTail + btc], &data[0]);
+                std::copy(&m_pData[m_dataTail], &m_pData[m_dataTail + btc],
+                          &data[0]);
                 bufSize -= btc;
                 data += btc;
                 rdSize += btc;
@@ -154,6 +194,11 @@ public:
         return rdSize;
     }
 
+    /**
+     * Check data at index position. No getting data just check.
+     * @param idx - index
+     * @return data at indexed position
+     */
     Data_t operator [](uint32_t idx) const
     {
         Data_t res(0);
@@ -183,6 +228,13 @@ public:
         return res;
     }
 
+    /**
+     * Check data array starting from position. No getting data just check.
+     * @param idx - start data position
+     * @param data - buffer to copy data
+     * @param bufSize - buffer size
+     * @return obtained elements count
+     */
     uint32_t checkAt(uint32_t idx, Data_t data[], uint32_t bufSize) const
     {
         uint32_t rdSize = 0;
@@ -198,8 +250,8 @@ public:
                     {
                         rdSize = bufSize;
                     }
-                    std::copy(&m_pData[m_dataTail + idx], &m_pData[m_dataTail + idx + rdSize],
-                              &data[0]);
+                    std::copy(&m_pData[m_dataTail + idx],
+                              &m_pData[m_dataTail + idx + rdSize], &data[0]);
                 }
             }
             else if(!isEmpty())
@@ -211,12 +263,14 @@ public:
                     {
                         rdSize = bufSize;
                     }
-                    std::copy(&m_pData[m_dataTail + idx], &m_pData[m_dataTail + idx + rdSize],
-                              &data[0]);
+                    std::copy(&m_pData[m_dataTail + idx],
+                              &m_pData[m_dataTail + idx + rdSize], &data[0]);
                     bufSize -= rdSize;
                     data += rdSize;
                     rdSize += m_dataHead > bufSize ? bufSize : m_dataHead;
-                    std::copy(&m_pData[0], &m_pData[m_dataHead > bufSize ? bufSize : m_dataHead],
+                    std::copy(&m_pData[0],
+                              &m_pData
+                                  [m_dataHead > bufSize ? bufSize : m_dataHead],
                               &data[0]);
                 }
                 else if(idx + m_dataTail - m_dataSize < m_dataHead)
@@ -227,7 +281,8 @@ public:
                         rdSize = bufSize;
                     }
                     std::copy(&m_pData[idx + m_dataTail - m_dataSize],
-                              &m_pData[idx + m_dataTail - m_dataSize + rdSize], &data[0]);
+                              &m_pData[idx + m_dataTail - m_dataSize + rdSize],
+                              &data[0]);
                 }
             }
         }
@@ -258,4 +313,4 @@ private:
     CCircBuffer(const CCircBuffer &);
 };
 
-#endif /* CCIRCBUFFER_H_ */
+#endif
